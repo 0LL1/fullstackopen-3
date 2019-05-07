@@ -1,7 +1,22 @@
 const express = require('express')
+const bodyParser = require('body-parser')
+const morgan = require('morgan')
+
+// 3.8
+morgan.token('phoneNumberData', (req, res) => JSON.stringify(req.body))
+
 const app = express()
 
-const phoneNumbers = [
+app.use(bodyParser.json())
+
+// 3.7
+app.use(
+  morgan(
+    ':method :url :status :res[content-length] - :response-time ms :phoneNumberData'
+  )
+)
+
+let phoneNumbers = [
   {
     id: 1,
     name: 'Arto Hellas',
@@ -24,10 +39,12 @@ const phoneNumbers = [
   }
 ]
 
+// 3.1
 app.get('/api/persons', (req, res) => {
   res.json(phoneNumbers)
 })
 
+// 3.2
 app.get('/info', (req, res) => {
   const date = new Date()
 
@@ -38,11 +55,54 @@ app.get('/info', (req, res) => {
   )
 })
 
+// 3.3
 app.get('/api/persons/:id', (req, res) => {
   const id = Number(req.params.id)
   const phoneNumber = phoneNumbers.find(num => num.id === id)
 
   phoneNumber ? res.json(phoneNumber) : res.status(404).end()
+})
+
+// 3.4
+app.delete('/api/persons/:id', (req, res) => {
+  const id = Number(req.params.id)
+  phoneNumbers = phoneNumbers.filter(num => num.id !== id)
+
+  res.status(204).end()
+})
+
+// 3.5
+app.post('/api/persons', (req, res) => {
+  let id = null
+  do {
+    id = Math.floor(Math.random() * 100 + 1)
+  } while (phoneNumbers.find(num => num.id === id))
+
+  const name = req.body.name
+  const number = req.body.number
+
+  // 3.6
+  if (!name || !number) {
+    return res.status(400).json({
+      error: 'content missing'
+    })
+  }
+
+  if (phoneNumbers.find(num => num.name === name)) {
+    return res.status(400).json({
+      error: 'name must be unique'
+    })
+  }
+
+  const phoneNumber = {
+    id,
+    name,
+    number
+  }
+
+  phoneNumbers = phoneNumbers.concat(phoneNumber)
+
+  res.json(phoneNumber)
 })
 
 const PORT = 3001
