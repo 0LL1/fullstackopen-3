@@ -93,8 +93,10 @@ app.put('/api/persons/:id', (req, res, next) => {
 const errorHandler = (err, req, res, next) => {
   console.log(err.message)
 
-  if (err.name === 'CastError' && error.kind == 'ObjectId') {
+  if (err.name === 'CastError' && err.kind === 'ObjectId') {
     return res.status(400).send({ error: 'malformatted id' })
+  } else if (err.name === 'ValidationError') {
+    return res.status(400).json({ error: err.message })
   }
 
   next(err)
